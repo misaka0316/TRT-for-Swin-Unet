@@ -1,5 +1,9 @@
 # FasterTransformer
 
+The transformed model uses the modified fastertransformer plug-in, which is the modified fastertransformer folder. 
+
+The plug-ins required for transformation can be recompiled according to the normal plug-in compilation process
+
 This repository provides a script and recipe to run the highly optimized transformer-based encoder and decoder component, and it is tested and maintained by NVIDIA.
 
 ## Table Of Contents
