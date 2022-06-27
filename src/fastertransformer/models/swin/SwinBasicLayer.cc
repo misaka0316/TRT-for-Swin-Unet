@@ -123,7 +123,7 @@ void SwinTransformerBasicLayer<T>::forward(std::vector<Tensor>* output_tensors,
     int* input_paramters = (int*)input_tensors->at(1).data;
     const int depth = input_paramters[0];
     const int num_head = input_paramters[1];
-    bool do_patch_merge = (input_paramters[2] == 1) ? true : false;
+    bool do_patch_merge = false;
     const int sm = input_paramters[3];
 
     patches_resolution_ = input_resolution;

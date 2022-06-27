@@ -69,6 +69,7 @@ def parse_option():
     args, unparsed = parser.parse_known_args()
 
     config = get_config(args)
+    print(config)
 
     return args, config
 
@@ -177,7 +178,8 @@ def swin_transformer(network, config, args, input_img, weights_dict):
     weight_idx += 1
     part_fc.append(trt.PluginField("norm_beta", np.array(sw_weights.weights[weight_idx]).astype(np.float32), trt.PluginFieldType.FLOAT32))
     weight_idx += 1
-
+    plg_registry = trt.get_plugin_registry()
+    swinTransformer_plg_creator = plg_registry.get_plugin_creator("CustomSwinTransformerPlugin", "1", "")
     pfc = trt.PluginFieldCollection([max_batch_size, img_size, patch_size, in_chans, embed_dim, window_size, ape, patch_norm, layer_num, mlp_ratio, qkv_bias, qk_scale, depths_f, num_heads_f] + part_fc)
     fn = swinTransformer_plg_creator.create_plugin("swin_transformer", pfc)
     inputs = [input_img]
@@ -190,8 +192,8 @@ def load_weights(inputbase, config):
     weights_dict = dict()
     try:
         tensor_dict = torch.load(inputbase,
-                                 map_location='cpu')
-        tensor_dict = tensor_dict['model']
+                                 map_location='cpu') #加载权重
+        #tensor_dict = tensor_dict['model']
         # remove training-related variables in the checkpoint
         param_names = [key for key in sorted(tensor_dict)]
         for pn in param_names:
@@ -244,9 +246,9 @@ def build_engine(config, args, weights_dict):
         #import pdb;pdb.set_trace()
         sw_output = swin_transformer(network, config, args, input_img, weights_dict) 
 
-        output_size = weights_dict["head.bias"].shape[0]
-        output = network.add_fully_connected(sw_output.get_output(0), output_size, trt.Weights(weights_dict["head.weight"].numpy().astype(np.float32).flatten()), trt.Weights(weights_dict["head.bias"].numpy().astype(np.float32).flatten()))
-        network.mark_output(output.get_output(0))
+        # output_size = weights_dict["swin_unet.head.bias"].shape[0]
+        # output = network.add_fully_connected(sw_output.get_output(0), output_size, trt.Weights(weights_dict["head.weight"].numpy().astype(np.float32).flatten()), trt.Weights(weights_dict["head.bias"].numpy().astype(np.float32).flatten()))
+        network.mark_output(sw_output.get_output(0))
 
         engine = builder.build_engine(network, builder_config)
         return engine
@@ -256,7 +258,8 @@ def main():
 
     args, config = parse_option()
 
-    weights_dict = load_weights(config.MODEL.RESUME, config)
+    weights_dict = load_weights(config.MODEL.RESUME, config) #加载权重
+    #print(weights_dict)
     
     with build_engine(config, args, weights_dict) as engine:
         TRT_LOGGER.log(TRT_LOGGER.VERBOSE, "Serializing Engine...")

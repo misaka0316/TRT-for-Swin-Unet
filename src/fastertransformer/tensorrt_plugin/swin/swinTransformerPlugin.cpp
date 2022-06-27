@@ -422,7 +422,7 @@ template<typename T>
 SwinTransformerPlugin<T>::~SwinTransformerPlugin()
 {
     for (int i = 0; i < weights_.size(); i++) {
-        check_cuda_error(cudaFree(weights_[i]));
+        //check_cuda_error(cudaFree(weights_[i]));
     }
     check_cuda_error(cublasDestroy(cublas_handle_));
     check_cuda_error(cublasLtDestroy(cublaslt_handle_));
@@ -467,16 +467,7 @@ DimsExprs SwinTransformerPlugin<T>::getOutputDimensions(int outputIndex,
                                                         int nbInputs,
                                                         IExprBuilder& exprBuilder) noexcept
 {
-    // Input is B*in_chans*H*W, output should be B*dim*1*1 for fc layer
-    assert(outputIndex == 0);
-    // Copy over everything
-    DimsExprs output;
-    output.nbDims = 4;
-    output.d[0] = inputs[0].d[0];
-    output.d[1] = exprBuilder.constant(output_dim_);
-    output.d[2] = exprBuilder.constant(1);
-    output.d[3] = exprBuilder.constant(1);
-    return output;
+    return inputs[0];
 }
 
 template<typename T>
@@ -517,8 +508,7 @@ nvinfer1::DataType SwinTransformerPlugin<T>::getOutputDataType(int index,
                                                                const nvinfer1::DataType* inputTypes,
                                                                int nbInputs) const noexcept
 {
-    assert(index == 0);
-    assert(inputTypes[0] == nvinfer1::DataType::kFLOAT || inputTypes[0] == nvinfer1::DataType::kHALF);
+
     return inputTypes[0];
 }
 
@@ -629,27 +619,31 @@ int SwinTransformerPlugin<T>::enqueue(const PluginTensorDesc* inputDesc,
                                       void* workspace,
                                       cudaStream_t stream) noexcept
 {
-    int batch_size = inputDesc->dims.d[0];
-    assert(batch_size <= max_batch_size_);
-    assert(in_chans_ == inputDesc->dims.d[1]);
-    assert(img_size_ == inputDesc->dims.d[2]);
-    assert(img_size_ == inputDesc->dims.d[3]);
-
-    int sm_ptr[1] = {sm_};
+   int sm_ptr[1] = {sm_};
     std::vector<Tensor> input_tensors = std::vector<Tensor>{
         Tensor{MEMORY_GPU,
                getTensorType<T>(),
-               std::vector<size_t>{(size_t)batch_size, (size_t)img_size_ * img_size_, (size_t)in_chans_},
+               std::vector<size_t>{(size_t)inputDesc[0].dims.d[0], (size_t)inputDesc[0].dims.d[1], (size_t)inputDesc[0].dims.d[2]},
                (const T*)(inputs[0])},
         Tensor{MEMORY_CPU, TYPE_INT8, std::vector<size_t>{1}, sm_ptr}};
 
     std::vector<Tensor> output_tensors = std::vector<Tensor>{
         Tensor{MEMORY_GPU,
                getTensorType<T>(),
-               std::vector<size_t>{(size_t)batch_size, (size_t)img_size_ * img_size_, (size_t)in_chans_},
+               std::vector<size_t>{(size_t)inputDesc[0].dims.d[0], (size_t)inputDesc[0].dims.d[1], (size_t)inputDesc[0].dims.d[2]},
                (T*)(outputs[0])}};
-
-    swin_transformer_->forward(&output_tensors, &input_tensors, params_);
+    int kind = inputDesc[0].dims.d[2] / 48;
+    int tmp = 0;
+    for (int i = 0;kind != 1;)
+    {
+        kind = kind / 2;
+        tmp = i;
+        i = i + 1;
+    }
+    kind = tmp;
+    
+    
+    swin_transformer_->forward(&output_tensors, &input_tensors, params_, kind);
     return 0;
 }
 

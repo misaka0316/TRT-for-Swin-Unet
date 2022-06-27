@@ -55,7 +55,7 @@ class SwinTransformerWeightTransposeQKVWeight(object):
                 for block_idx in range(depths[layer_idx]):
                     ###block_weight_suffixes
                     for block_weight_suffix in block_weight_suffixes:
-                        weight_name = 'layers.{}.blocks.{}.{}'.format(layer_idx, block_idx, block_weight_suffix)
+                        weight_name = 'swin_unet.layers.{}.blocks.{}.{}'.format(layer_idx, block_idx, block_weight_suffix)
                         if weight_name in weights:
                             #transpose qkv weight [3*head*size, k] --> [k, head*3*size]
                             if "attn.qkv.weight" in weight_name:
@@ -75,8 +75,8 @@ class SwinTransformerWeightTransposeQKVWeight(object):
                             print("[ERROR][SwinTransformerWeights::__init__] missing weight {}.".format(weight_name))
                             exit(-1)
                     ###get relative position bias
-                    index_name = 'layers.{}.blocks.{}.attn.relative_position_index'.format(layer_idx, block_idx)
-                    table_name = 'layers.{}.blocks.{}.attn.relative_position_bias_table'.format(layer_idx, block_idx)
+                    index_name = 'swin_unet.layers.{}.blocks.{}.attn.relative_position_index'.format(layer_idx, block_idx)
+                    table_name = 'swin_unet.layers.{}.blocks.{}.attn.relative_position_bias_table'.format(layer_idx, block_idx)
                     if index_name in weights and table_name in weights:
                         relative_position_bias = gen_relative_pos_bias(weights[table_name], weights[index_name], window_size, num_heads[layer_idx])
                         self.weights.append(relative_position_bias)
@@ -86,7 +86,7 @@ class SwinTransformerWeightTransposeQKVWeight(object):
                 ##deal with layer weights
                 ###loop over layer_weight_suffixes
                 for layer_weight_suffix in layer_weight_suffixes:
-                    weight_name = 'layers.{}.{}'.format(layer_idx, layer_weight_suffix)
+                    weight_name = 'swin_unet.layers.{}.{}'.format(layer_idx, layer_weight_suffix)
                     if weight_name in weights:
                         self.weights.append(weights[weight_name])
                     else:
@@ -97,14 +97,14 @@ class SwinTransformerWeightTransposeQKVWeight(object):
                             print("[ERROR][SwinTransformerWeights::__init__] missing weight {}.".format(weight_name))
                             exit(-1)
                 ###get attn_mask (same for each layer, some layer may not has one)
-                attn_mask_name = 'layers.{}.blocks.1.attn_mask'.format(layer_idx)
+                attn_mask_name = 'swin_unet.layers.{}.blocks.1.attn_mask'.format(layer_idx)
                 if attn_mask_name in weights:
                     self.weights.append(weights[attn_mask_name])
                 else:
                     self.weights.append(torch.Tensor())
             #deal with sw weights
             for sw_weight_suffix in sw_weight_suffixes:
-                weight_name = '{}'.format(sw_weight_suffix)
+                weight_name = 'swin_unet.{}'.format(sw_weight_suffix)
                 if weight_name in weights:
                     self.weights.append(weights[weight_name])
                 else:

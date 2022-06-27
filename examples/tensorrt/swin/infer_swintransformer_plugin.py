@@ -100,8 +100,8 @@ def run_swintransformer_plugin(args, config, model, image):
     in_chans = config.MODEL.SWIN.IN_CHANS
     embed_dim = config.MODEL.SWIN.EMBED_DIM
 
-    output_size = model.head.bias.shape[0]
-    print("output_size ", output_size)
+    # output_size = model.head.bias.shape[0]
+    # print("output_size ", output_size)
 
     with open(args.engine, 'rb') as f, trt.Runtime(TRT_LOGGER) as runtime, \
             runtime.deserialize_cuda_engine(f.read()) as engine, \
@@ -116,7 +116,7 @@ def run_swintransformer_plugin(args, config, model, image):
         stream = cuda.Stream()
 
         d_inputs = [cuda.mem_alloc(input_nbytes0)]
-        output_shape = (max_batch * output_size)
+        output_shape = (max_batch, 224, 224, 96)
         h_output = cuda.pagelocked_empty(output_shape, dtype=np.float32)
         d_output = cuda.mem_alloc(h_output.nbytes)
 
@@ -146,6 +146,7 @@ def run_swintransformer_plugin(args, config, model, image):
         cuda.memcpy_dtoh_async(h_output, d_output, stream)
         stream.synchronize()
 
+        print("\noutput shape:", h_output.shape)
         return h_output
 
 @torch.no_grad()
@@ -173,10 +174,11 @@ def validate_with_random_data(config, args, model):
     img_size = config.DATA.IMG_SIZE
     in_chans = config.MODEL.SWIN.IN_CHANS
     images = np.random.rand(max_batch, in_chans, img_size, img_size)
+    print("\ninput shape:", images.shape)
     
     ## run pytorch plugin
     plugin_output = run_swintransformer_plugin(args, config, model, images)
-    
+    '''
     if args.use_fp16:
         images = torch.tensor(images, dtype=torch.half)
         model.half()
@@ -189,6 +191,7 @@ def validate_with_random_data(config, args, model):
 
     diff = abs(torch_output - plugin_output.reshape(max_batch, -1))
     print("torch_output vs plugin_output , avg diff : ", diff.mean((1)), "max diff : ", diff.max((1)))
+    '''
 
 if __name__ == '__main__':
     args, config = parse_option()

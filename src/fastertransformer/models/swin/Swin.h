@@ -41,6 +41,7 @@ private:
     int patches_resolution_ = 56;
     int layer_num_ = 4;
     int qk_scale_ = 1.0f;
+    int kind_ = 0;
     size_t max_buf_size_ = 0;
     IAllocator* allocator_ = nullptr;
     cudnnHandle_t cudnn_handle_;
@@ -104,7 +105,7 @@ public:
 
     void forward(std::vector<Tensor>* output_tensors,
                  const std::vector<Tensor>* input_tensors,
-                 SwinTransformerWeight<T>& swin_weights);
+                 SwinTransformerWeight<T>& swin_weights, int kind);
 
 };  // class SwinTransformer
 }  // namespace fastertransformer

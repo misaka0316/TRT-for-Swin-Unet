@@ -47,6 +47,7 @@ public:
     float mlp_ratio_;
     bool qkv_bias_;
     float qk_scale_;
+    int kind_;
 
     SwinTransformerFunc(const int max_batch,
                         const int img_size,
@@ -200,7 +201,7 @@ public:
                        data_type,
                        std::vector<size_t>{(size_t)batch_size, (size_t)img_size_ * img_size_, (size_t)in_chans_},
                        get_ptr<T>(output)}};
-        swin_transformer->forward(&output_tensors, &input_tensors, params_);
+        swin_transformer->forward(&output_tensors, &input_tensors, params_, kind_);
         delete swin_transformer;
         delete cublas_wrapper;
         delete allocator;

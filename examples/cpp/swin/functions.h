@@ -36,6 +36,7 @@ static int getWeightNum(const int layer_num, const int* depths)
             weight_num += 13;
         }
         weight_num += 4;
+        //weight_num += 1; // one for attn_mask
     }
     return weight_num;
 }

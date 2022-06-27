@@ -267,13 +267,13 @@ void test(int model_type, int batch)
 
     // warmup
     for (int i = 0; i < 10; i++)
-        sw.forward(&output_tensors, &input_tensors, params);
+        sw.forward(&output_tensors, &input_tensors, params, 1);
 
     int ite = 100;
     CudaTimer cuda_timer(stream);
     cuda_timer.start();
     for (int i = 0; i < ite; i++)
-        sw.forward(&output_tensors, &input_tensors, params);
+        sw.forward(&output_tensors, &input_tensors, params, 1);
     float total_time = cuda_timer.stop();
 
     FT_LOG_INFO("batch_size %ld model_type:%d "

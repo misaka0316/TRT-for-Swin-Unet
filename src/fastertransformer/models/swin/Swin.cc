@@ -170,7 +170,7 @@ void SwinTransformer<T>::patchEmbed(T* output,
 template<typename T>
 void SwinTransformer<T>::forward(std::vector<Tensor>* output_tensors,
                                  const std::vector<Tensor>* input_tensors,
-                                 SwinTransformerWeight<T>& swin_weights)
+                                 SwinTransformerWeight<T>& swin_weights, int kind)
 {
     // input_tensors:
     //      input_images [batch, in_channels, input_resolution, input_resolution]
@@ -183,85 +183,72 @@ void SwinTransformer<T>::forward(std::vector<Tensor>* output_tensors,
     const size_t batch = input_tensors->at(0).shape[0];
     const int sm = *(const int*)input_tensors->at(1).data;
     allocateBuffer();
-    patchEmbed(x_patch_embed_,
-               input,
-               swin_weights.patchEmbed_linear_weights.kernel,
-               swin_weights.patchEmbed_linear_weights.bias,
-               swin_weights.patchEmbed_norm_weights.gamma,
-               swin_weights.patchEmbed_norm_weights.beta,
-               batch,
-               img_size_,
-               patch_size_,
-               patches_resolution_,
-               in_chans_,
-               embed_dim_,
-               patch_norm_);
-
-    size_t basic_layer_dim = embed_dim_;
+    size_t basic_layer_dim = input_tensors->at(0).shape[3];
     size_t basic_layer_input_resolution = patches_resolution_;
     int basic_layer_output_size = batch * patches_resolution_ * patches_resolution_ * embed_dim_ / 2;
     size_t m = batch * patches_resolution_ * patches_resolution_;
     size_t n = embed_dim_;
     DataType data_type = getTensorType<T>();
-
-    bool do_patch_merge = true;
-    if (layer_num_ == 1) {
-        do_patch_merge = false;
+    for (int i = 0;i < kind;i++)
+    {
+        basic_layer_input_resolution /= 2;
+        
     }
+    
+    
+    int a = 0;
+    int i = kind;
+    bool do_patch_merge = false;
 
-    for (int i = 0; i < layer_num_; i++) {
-        if (i == layer_num_ - 1) {
-            do_patch_merge = false;
-        }
-
-        std::vector<Tensor> tmp_output_tensors{Tensor{
+    std::vector<Tensor> tmp_output_tensors
+    {Tensor{
+        MEMORY_GPU,
+        data_type,
+        std::vector<size_t>{batch, basic_layer_input_resolution, basic_layer_input_resolution, basic_layer_dim},
+        output}};
+    int additional_params[4] = {depths_[i], num_heads_[i], do_patch_merge ? 1 : 0, sm};
+    std::vector<Tensor> tmp_input_tensors{
+        Tensor{
             MEMORY_GPU,
             data_type,
             std::vector<size_t>{batch, basic_layer_input_resolution, basic_layer_input_resolution, basic_layer_dim},
-            basic_layer_output_ + (i % 2) * basic_layer_output_size}};
-        int additional_params[4] = {depths_[i], num_heads_[i], do_patch_merge ? 1 : 0, sm};
-        std::vector<Tensor> tmp_input_tensors{
-            Tensor{
-                MEMORY_GPU,
-                data_type,
-                std::vector<size_t>{batch, basic_layer_input_resolution, basic_layer_input_resolution, basic_layer_dim},
-                i == 0 ? x_patch_embed_ : basic_layer_output_ + ((i - 1) % 2) * basic_layer_output_size},
-            Tensor{MEMORY_CPU, TYPE_INT8, std::vector<size_t>{4}, additional_params}};
-        basic_layer_->forward(&tmp_output_tensors, &tmp_input_tensors, swin_weights.basic_layer_weight_list[i]);
+            input},
+        Tensor{MEMORY_CPU, TYPE_INT8, std::vector<size_t>{4}, additional_params}};
+    basic_layer_->forward(&tmp_output_tensors, &tmp_input_tensors, swin_weights.basic_layer_weight_list[i]);
 
-        if (i != layer_num_ - 1) {
-            basic_layer_dim *= 2;
-            basic_layer_input_resolution /= 2;
-        }
-    }
+    
+    
+        
+    
+    // not do
+    //invokeGeneralLayerNorm(basic_layer_output_ + (layer_num_ % 2) * basic_layer_output_size,
+    //                       basic_layer_output_ + ((layer_num_ - 1) % 2) * basic_layer_output_size, /*该LN层的输入，想将其作为forward的最终输出*/
+    //                       swin_weights.norm_weights.gamma,
+    //                       swin_weights.norm_weights.beta,
+    //                       batch * basic_layer_input_resolution * basic_layer_input_resolution,
+    //                       basic_layer_dim,
+    //                       stream_);
 
-    invokeGeneralLayerNorm(basic_layer_output_ + (layer_num_ % 2) * basic_layer_output_size,
-                           basic_layer_output_ + ((layer_num_ - 1) % 2) * basic_layer_output_size,
-                           swin_weights.norm_weights.gamma,
-                           swin_weights.norm_weights.beta,
-                           batch * basic_layer_input_resolution * basic_layer_input_resolution,
-                           basic_layer_dim,
-                           stream_);
+    // avg pool not do
+    //int final_len = basic_layer_input_resolution * basic_layer_input_resolution;
+    //cublas_wrapper_->stridedBatchedGemm(CUBLAS_OP_N,
+    //                                    CUBLAS_OP_N,
+    //                                    basic_layer_dim,
+    //                                    1,
+    //                                    final_len,
+    //                                    basic_layer_output_ + (layer_num_ % 2) * basic_layer_output_size,
+    //                                    basic_layer_dim,
+    //                                    basic_layer_dim * final_len,
+    //                                    avg_pool_ones_,
+    //                                    final_len,
+    //                                    1 * final_len,
+    //                                    output, /* forward最终输出*/
+    //                                    basic_layer_dim,
+    //                                    basic_layer_dim * 1,
+    //                                    batch,
+    //                                    1.0f / final_len);
 
-    // avg pool
-    int final_len = basic_layer_input_resolution * basic_layer_input_resolution;
-    cublas_wrapper_->stridedBatchedGemm(CUBLAS_OP_N,
-                                        CUBLAS_OP_N,
-                                        basic_layer_dim,
-                                        1,
-                                        final_len,
-                                        basic_layer_output_ + (layer_num_ % 2) * basic_layer_output_size,
-                                        basic_layer_dim,
-                                        basic_layer_dim * final_len,
-                                        avg_pool_ones_,
-                                        final_len,
-                                        1 * final_len,
-                                        output,
-                                        basic_layer_dim,
-                                        basic_layer_dim * 1,
-                                        batch,
-                                        1.0f / final_len);
-
+    //output = basic_layer_output_ + (i % 2) * basic_layer_output_size;
     if (is_free_buffer_after_forward_) {
         freeBuffer();
     }
