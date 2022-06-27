@@ -1,0 +1,6 @@
+cuda-python
+nvidia-pyindex
+onnx-graphsurgeon
+timm
+medpy
+einops
