@@ -30,9 +30,11 @@ make install
 pip install -r requirements.txt
 ```
 
+如果设备用不了编译完的Plugin可以自行编译
 编译FasterTransformer：（DSM根据具体设备算力指定）
 
 ```
+git clone -b FasterTransformer https://github.com/misaka0316/TRT-for-Swin-Unet.git
 cd FasterTransformer
 mkdir -p build
 cd build
