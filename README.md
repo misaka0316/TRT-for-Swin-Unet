@@ -178,6 +178,7 @@ terminate called after throwing an instance of 'std::runtime_error'
 该错误尚未定位到具体原因，还未解决，所以最终测试结果没有做FP16情况下的测试。
 
 # Citation
+```bibtex
 @misc{cao2021swinunet,
       title={Swin-Unet: Unet-like Pure Transformer for Medical Image Segmentation}, 
       author={Hu Cao and Yueyue Wang and Joy Chen and Dongsheng Jiang and Xiaopeng Zhang and Qi Tian and Manning Wang},
@@ -186,3 +187,4 @@ terminate called after throwing an instance of 'std::runtime_error'
       archivePrefix={arXiv},
       primaryClass={eess.IV}
 }
+```
