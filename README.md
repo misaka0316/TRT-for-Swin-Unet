@@ -50,7 +50,7 @@ cp ../../FasterTransformer/build/lib/libswinTransformer_plugin.so .
 cp ../../FasterTransformer/build/lib/libpyt_swintransformer.so .
 ```
 
-准备Onnx模型，可参考`PytorchToONNX/PytorchToOnnx.py`将Onnx模型导出至`model`下
+准备Onnx模型，可参考`PytorchToONNX/PytorchToOnnx.py`将Onnx模型导出至`model`下(复赛验证请[点击这里](https://pan.baidu.com/s/17TYOtAkxrElbiiIc7cz6tg?pwd=iiji)下载模型与验证数据，模型存放至`model`目录下，验证数据集存放在`Swin-Unet-main/datasets/Synapse/test_vol_h5/`目录下)
 
 构建TensorRT引擎：（需要在ONNXToTensorRT目录下运行）
 
