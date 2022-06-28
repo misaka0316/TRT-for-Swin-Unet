@@ -56,6 +56,7 @@ cp ../../FasterTransformer/build/lib/libpyt_swintransformer.so .
 
 ```
 cd ONNXToTensorRT
+mkdir -p output
 python ONNXToTensorRT.py --flag TF32
 ```
 
@@ -150,6 +151,7 @@ FasterTransformer中的实现是Swin-Block + Patch merging，而Swin-Block的输
 
 ```
 cd basic
+mkdir -p output
 python Parser.py --flag FP32/TF32
 python testPlan-B1.py --flag FP32/TF32
 ```
@@ -157,6 +159,7 @@ python testPlan-B1.py --flag FP32/TF32
 - 优化后方案测试：
 ```
 cd ONNXToTensorRT
+mkdir -p output
 python ONNXToTensorRT.py --flag FP32/TF32
 python testPlan-B1.py --flag FP32/TF32
 ```
@@ -164,6 +167,7 @@ python testPlan-B1.py --flag FP32/TF32
 - OnnxRuntime测试：
 ```
 cd basic
+mkdir -p output
 python onnx_inference.py
 ```
 
