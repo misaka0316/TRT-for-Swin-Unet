@@ -1,6 +1,7 @@
 cuda-python
 nvidia-pyindex
 onnx-graphsurgeon
+--extra-index-url https://pypi.ngc.nvidia.com
 timm
 medpy
 einops
