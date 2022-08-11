@@ -122,7 +122,7 @@ SwinTransformerPlugin
 │
 └── AVG Pool
 ```
-该Plugin与Swin-Unet的下采样过程非常相似，但是从Swin-Unet的网络结构图中可以得知，在下采样过程中的Swin-Block与上采样过程中对应的Swin-Block进行了跳跃连接，所以无法直接采用该Plugin，后续优化中采用的是对下采样过程中的Swin-Block使用FasterTransformer中的SwinTransformerBlock进行替换，主要是为了优化W-MSA以及SW-MSA的计算以及上文中提到的LayerNorm+MLP的计算.  
+该Plugin与Swin-Unet的下采样过程非常相似，但是从Swin-Unet的网络结构图中可以得知，在下采样过程中的Swin-Block与上采样过程中对应的Swin-Block进行了跳跃连接，所以无法直接采用该Plugin，后续优化中采用的是对下采样过程中的Swin-Block使用FasterTransformer中的SwinTransformerBlock进行替换，主要是为了优化W-MSA(Window Multi-head Self-Attention模块)以及SW-MSA(Shifted-Window  Window Multi-head Self-Attention模块)的计算以及上文中提到的LayerNorm+MLP的计算.  
 
 接下来详细介绍替换过程：
 在替换过程中，我们采用了FasterTransformer中的SwinBasicLayer作为Swin-Unet下采样过程的Swin-Block × 2替换，SwinBasicLayer的具体实现以及修改位于`FasterTransformer/src/fastertransformer/models/swin/SwinBasicLayer.cc`，该部分修改只是禁用了Patch Merging，禁用的原因为：在网络结构图中的一个Stage是由Patch merging + Swin-Block组成的，但是
