@@ -125,7 +125,11 @@ SwinTransformerPlugin
 该Plugin与Swin-Unet的下采样过程非常相似，但是从Swin-Unet的网络结构图中可以得知，在下采样过程中的Swin-Block与上采样过程中对应的Swin-Block进行了跳跃连接，所以无法直接采用该Plugin，后续优化中采用的是对下采样过程中的Swin-Block使用FasterTransformer中的SwinTransformerBlock进行替换，主要是为了优化W-MSA(Window Multi-head Self-Attention模块)以及SW-MSA(Shifted-Window Multi-head Self-Attention模块)的计算以及上文中提到的LayerNorm+MLP的计算.  
 
 接下来详细介绍替换过程：
-在替换过程中，我们采用了FasterTransformer中的SwinBasicLayer作为Swin-Unet下采样过程的Swin-Block × 2替换，SwinBasicLayer的具体实现以及修改位于`FasterTransformer/src/fastertransformer/models/swin/SwinBasicLayer.cc`，该部分修改只是禁用了Patch Merging，禁用的原因为：在网络结构图中的一个Stage是由Patch merging + Swin-Block组成的，但是
+在替换过程中，我们采用了FasterTransformer中的SwinBasicLayer作为Swin-Unet下采样过程的Swin-Block × 2替换，SwinBasicLayer的具体实现以及修改位于
+
+`FasterTransformer/src/fastertransformer/models/swin/SwinBasicLayer.cc`.  
+
+该部分修改只是禁用了Patch Merging，禁用的原因为：在网络结构图中的一个Stage是由Patch merging + Swin-Block组成的，但是
 FasterTransformer中的实现是Swin-Block + Patch merging，而Swin-Block的输出需要传递给上采样部分，一方面是为了降低开发难度，另一方面是Patch merging的优化效果相比Swin-Block会显得非常小，所以没有对Patch merging进行优化。在代码中，我们根据输入张量的最后两维来判断是否需要做Patch Partition以及Linear Embedding，即除了第一个Swin-Block前需要做该操作以外，其余的Swin-Block都不需要。最后将相关代码封装成了Plugin。   
 
 然后需要在Onnx中把下采样过程中的Swin-Block进行替换。在这部分工作中，因为我们没有采用通过Plugin的input来进行传参，而是使用PluginFieldCollection进行传参然后创建Plugin进行Layer的替换。我们首先使用了OnnxGraphSurgeon在Onnx模型将Swin-Block暂时替换为一个临时节点，替换为临时节点的目的是为了防止TensorRT OnnxParser过程中对待替换的Swin-Block内部节点进行操作（例如与后续Swin-Block外的节点进行连接），替换之后在TensorRT中对Onnx模型进行Parser，然后分别创建4个Plugin，并使用PluginFieldCollection进行参数权重的传递，详细的传参操作在`ONNXToTensorRT/plugin/LoadSwinTransformerWeightTransposeQKVWeight.py`中，然后使用TensorRT中的API进行Surgeon，把4个临时节点替换为Plugin，然后进行引擎的构建及保存。
