@@ -28,8 +28,8 @@ graph = gs.import_onnx(onnx.load("../model/model.onnx"))
 Num = 0
 
 #第一个SwimBlock x 2
-Expand = [node for node in graph.nodes if node.name == "ReduceMean_31"][0]
-Add = [node for node in graph.nodes if node.name == "Add_340"][0]
+Expand = [node for node in graph.nodes if node.name == "ReduceMean_25"][0]
+Add = [node for node in graph.nodes if node.name == "Add_201"][0]
 
 inputTensor = Expand.inputs[0]
 outputTensor = Add.outputs[0]
@@ -44,8 +44,8 @@ graph.cleanup().toposort()
 Num = Num + 1
 
 #第二个SwimBlock x 2
-Expand = [node for node in graph.nodes if node.name == "ReduceMean_416"][0]
-Add = [node for node in graph.nodes if node.name == "Add_725"][0]
+Expand = [node for node in graph.nodes if node.name == "ReduceMean_257"][0]
+Add = [node for node in graph.nodes if node.name == "Add_433"][0]
 
 inputTensor = Expand.inputs[0]
 outputTensor = Add.outputs[0]
@@ -58,8 +58,8 @@ graph.cleanup().toposort()
 Num = Num + 1
 
 #第三个SwimBlock x2
-Expand = [node for node in graph.nodes if node.name == "ReduceMean_801"][0]
-Add = [node for node in graph.nodes if node.name == "Add_1110"][0]
+Expand = [node for node in graph.nodes if node.name == "ReduceMean_489"][0]
+Add = [node for node in graph.nodes if node.name == "Add_665"][0]
 
 inputTensor = Expand.inputs[0]
 outputTensor = Add.outputs[0]
@@ -72,8 +72,8 @@ graph.cleanup().toposort()
 Num = Num + 1
 
 #第4个Swim Block x 2
-Expand = [node for node in graph.nodes if node.name == "ReduceMean_1186"][0]
-Add = [node for node in graph.nodes if node.name == "Add_1445"][0]
+Expand = [node for node in graph.nodes if node.name == "ReduceMean_721"][0]
+Add = [node for node in graph.nodes if node.name == "Add_858"][0]
 
 inputTensor = Expand.inputs[0]
 outputTensor = Add.outputs[0]
