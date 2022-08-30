@@ -22,7 +22,7 @@ tmp = "./plugin/LayerNorm.so"
 inputbase = "../Swin-Unet-main/model_out/best.pth"
 
 sys.path.insert(0, "./plugin")
-import LoadSwinTransformerWeightTransposeQKVWeight
+from plugin import LoadSwinTransformerWeightTransposeQKVWeight
 
 #替换节点
 graph = gs.import_onnx(onnx.load("../model/model.onnx"))
