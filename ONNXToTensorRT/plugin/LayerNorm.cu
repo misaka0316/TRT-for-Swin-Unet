@@ -1,6 +1,6 @@
 #include "LayerNorm.h"
 
-__global__ void layerNormGPU(const float *pInput, float *pOutput，int *dim)
+__global__ void layerNormGPU(const float *pInput, float *pOutpu,int dim)
 {
     // const int tx = threadIdx.x;
     const int idx = blockIdx.x * blockDim.x + threadIdx.x;
