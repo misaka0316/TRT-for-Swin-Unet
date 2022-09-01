@@ -1,6 +1,6 @@
 #include "LayerNorm.h"
 
-__global__ void layerNormGPU(const float *pInput, float *pOutput，int *dim , int *dim2)
+__global__ void layerNormGPU(const float *pInput, float *pOutput，int *dim)
 {
     // const int tx = threadIdx.x;
     const int idx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -9,6 +9,7 @@ __global__ void layerNormGPU(const float *pInput, float *pOutput，int *dim , in
     __shared__ float var[2048];
     __shared__ double m [17];
     double square0, square1;
+    int dim2 = dim/2;
     //加载输出到shared memory
     var[tx] = pInput[idx];
     __syncthreads();
@@ -122,8 +123,7 @@ namespace nvinfer1 {
 
     int32_t LayerNormPlugin::enqueue(const PluginTensorDesc *inputDesc, const PluginTensorDesc *outputDesc, const void *const *inputs, void *const *outputs, void *workspace, cudaStream_t stream) noexcept {
         WHERE_AM_I()
-        int dim2 = inputDesc[0].dims.d[2] / 2;
-        layerNormGPU<<< inputDesc[0].dims.d[0] * inputDesc[0].dims.d[1], inputDesc[0].dims.d[2]>>>(reinterpret_cast<const float * >(inputs[0]), reinterpret_cast<float * >(outputs[0]), inputDesc[0].dims.d[2], dim2);
+        layerNormGPU<<< inputDesc[0].dims.d[0] * inputDesc[0].dims.d[1], inputDesc[0].dims.d[2]>>>(reinterpret_cast<const float * >(inputs[0]), reinterpret_cast<float * >(outputs[0]), inputDesc[0].dims.d[2]);
         return 0;
     }
 
