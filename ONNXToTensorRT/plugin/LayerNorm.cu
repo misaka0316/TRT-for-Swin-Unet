@@ -13,13 +13,13 @@ __global__ void layerNormGPU(const float *pInput, float *pOutput，int dim , int
     var[tx] = pInput[idx];
     __syncthreads();
     //元素和
-    if (tx < dim)
+    if (tx < dim2)
     {
         temp[tx] = var[tx] + var[tx + dim];
     }
     __syncthreads();
 
-    for (int stride = dim; stride >= 3; stride /= 2)
+    for (int stride = dim2; stride >= 3; stride /= 2)
     {
         if (tx < stride)
         {
@@ -31,20 +31,20 @@ __global__ void layerNormGPU(const float *pInput, float *pOutput，int dim , int
     if (tx < 1)
     {
         temp[0] = temp[0] + temp[1] + temp[2];
-        m[0] = temp[0] / dim2;
+        m[0] = temp[0] / dim;
     }
     __syncthreads();
     
     //平方和
-    if (tx < dim)
+    if (tx < dim2)
     {   
         square0 = var[tx] - m[0];
-        square1 = var[tx + dim] - m[0];
+        square1 = var[tx + dim2] - m[0];
         temp[tx] = square0 * square0 + square1 * square1;   //平方期望
     }
     __syncthreads();
 
-    for (int stride = dim; stride >= 3; stride /= 2)
+    for (int stride = dim2; stride >= 3; stride /= 2)
     {
         if (tx < stride)
         {
@@ -56,7 +56,7 @@ __global__ void layerNormGPU(const float *pInput, float *pOutput，int dim , int
     if (tx < 1)
     {
     temp[0] = temp[0] + temp[1] + temp[2];
-    m[16] = temp[0] / dim2;
+    m[16] = temp[0] / dim;
     }
     __syncthreads();
 
