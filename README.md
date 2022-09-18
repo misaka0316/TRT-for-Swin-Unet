@@ -8,6 +8,7 @@
 ```
 docker run -ti --gpus all -v ProjectPath:/target nvcr.io/nvidia/pytorch:21.07-py3
 ```
+此docker安装的TensorRT版本较低无法生成下面添加plugin的程序.请自行安装TRT8.4BAN版本,并构筑环境.
 然后进入项目文件夹：
 ```
 cd /target
