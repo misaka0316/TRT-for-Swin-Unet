@@ -3,12 +3,8 @@
 ## 优化效果
 相比TensorRT默认方案优化后FP32下dice平均误差为0.011，hd96平均误差为0.046，加速比为14.5%；TF32下dice平均误差为0.011，hd96平均误差为0.072，加速比为5.9%。
 ## 运行步骤
-首先创建Docker容器，将项目文件夹挂载至Docker容器内，例如：
+由于docker容器中的cuda版本和TRT版本都不适用于工程，所以建议不使用dacker，自行安装TRT8.4.3.1和cuda11.6版本，在主机上构建环境例如：
 
-```
-docker run -ti --gpus all -v ProjectPath:/target nvcr.io/nvidia/pytorch:21.07-py3
-```
-此docker安装的TensorRT版本较低无法生成下面添加plugin的程序.请自行安装TRT8.4BAN版本,并构筑环境.
 然后进入项目文件夹：
 ```
 cd /target
