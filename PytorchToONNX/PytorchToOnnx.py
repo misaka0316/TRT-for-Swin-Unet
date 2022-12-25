@@ -28,7 +28,7 @@ output_name = 'output'
 torch.onnx.export(model,               # model being run
                   inputs,                         # model input
                   OnnxPath,   # where to save the model (can be a file or file-like object)
-                  opset_version=12,          # the ONNX version to export the model to
+                  opset_version=13,          # the ONNX version to export the model to
                   input_names=[input_name],   # the model's input names
                   output_names=[output_name],
                   dynamic_axes= {
