@@ -26,64 +26,24 @@ import LoadSwinTransformerWeightTransposeQKVWeight
 graph = gs.import_onnx(onnx.load("../model/model.onnx"))
 
 Num = 0
+Expand_list = ["ReduceMean_25", "ReduceMean_257", "ReduceMean_489", "ReduceMean_721"]
+Add_list = ["Add_201", "Add_433", "Add_665", "Add_858"]
 
-#第一个SwimBlock x 2
-Expand = [node for node in graph.nodes if node.name == "ReduceMean_25"][0]
-Add = [node for node in graph.nodes if node.name == "Add_201"][0]
+for Num in range(4):
+  #SwimBlock
+  Expand = [node for node in graph.nodes if node.name == Expand_list[Num]][0]
+  Add = [node for node in graph.nodes if node.name == Add_list[Num]][0]
 
-inputTensor = Expand.inputs[0]
-outputTensor = Add.outputs[0]
-#Add2.o(0).inputs[0] = inputTensor
-#Add2.o(1).inputs[0] = inputTensor
+  inputTensor = Expand.inputs[0]
+  outputTensor = Add.outputs[0]
+  #Add2.o(0).inputs[0] = inputTensor
+  #Add2.o(1).inputs[0] = inputTensor
 
-layerNorm = gs.Node("LayerNorm", "CustomSwinTransformerPlugin-0", inputs=[inputTensor], outputs=[outputTensor])
-graph.nodes.append(layerNorm)
+  layerNorm = gs.Node("LayerNorm", "CustomSwinTransformerPlugin-" + str(Num), inputs=[inputTensor], outputs=[outputTensor])
+  graph.nodes.append(layerNorm)
 
-Add.outputs = []
-graph.cleanup().toposort()
-Num = Num + 1
-
-#第二个SwimBlock x 2
-Expand = [node for node in graph.nodes if node.name == "ReduceMean_257"][0]
-Add = [node for node in graph.nodes if node.name == "Add_433"][0]
-
-inputTensor = Expand.inputs[0]
-outputTensor = Add.outputs[0]
-
-layerNorm = gs.Node("LayerNorm", "CustomSwinTransformerPlugin-1", inputs=[inputTensor], outputs=[outputTensor])
-graph.nodes.append(layerNorm)
-
-Add.outputs = []
-graph.cleanup().toposort()
-Num = Num + 1
-
-#第三个SwimBlock x2
-Expand = [node for node in graph.nodes if node.name == "ReduceMean_489"][0]
-Add = [node for node in graph.nodes if node.name == "Add_665"][0]
-
-inputTensor = Expand.inputs[0]
-outputTensor = Add.outputs[0]
-
-layerNorm = gs.Node("LayerNorm", "CustomSwinTransformerPlugin-2", inputs=[inputTensor], outputs=[outputTensor])
-graph.nodes.append(layerNorm)
-
-Add.outputs = []
-graph.cleanup().toposort()
-Num = Num + 1
-
-#第4个Swim Block x 2
-Expand = [node for node in graph.nodes if node.name == "ReduceMean_721"][0]
-Add = [node for node in graph.nodes if node.name == "Add_858"][0]
-
-inputTensor = Expand.inputs[0]
-outputTensor = Add.outputs[0]
-
-layerNorm = gs.Node("LayerNorm", "CustomSwinTransformerPlugin-3", inputs=[inputTensor], outputs=[outputTensor])
-graph.nodes.append(layerNorm)
-
-Add.outputs = []
-graph.cleanup().toposort()
-Num = Num + 1
+  Add.outputs = []
+  graph.cleanup().toposort()
 
 onnx.save(gs.export_onnx(graph), onnxFile) #保存
 
